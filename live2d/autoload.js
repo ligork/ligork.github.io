@@ -22,7 +22,7 @@
     const config = {
         // 你的看板娘资源路径
         basePath: 'https://ligork.github.io/live2d/',
-        // 使用 jsdelivr 提供的模型 API（稳定快速）
+        // 模型 API 地址
         modelAPI: 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/model/',
         debug: false
     };
@@ -30,7 +30,8 @@
     // ===== 加载资源 =====
     const resources = [
         { type: 'css', url: config.basePath + 'waifu.css' },
-        { type: 'js', url: config.basePath + 'live2d.min.js' },
+        // 使用 CDN 加载 live2d.min.js，不需要本地文件
+        { type: 'js', url: 'https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/live2d.min.js' },
         { type: 'js', url: config.basePath + 'waifu-tips.js' }
     ];
     
