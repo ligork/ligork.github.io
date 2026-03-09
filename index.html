@@ -617,18 +617,17 @@
 
     </div> <!-- content-wrapper结束 -->
 
-<!-- Live2D 看板娘 - 正常显示 -->
 <script>
 window.L2DwidgetConfig = {
     model: {
         jsonPath: 'https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json'
     },
     display: {
-        position: 'right',        // 左侧
-        width: 120,
-        height: 240,
-        hOffset: 20,
-        vOffset: 150,
+        position: 'left',        // 左侧
+        width: 60,               // 原来120 → 一半60
+        height: 120,             // 原来240 → 一半120
+        hOffset: 10,             // 偏移量也适当减小
+        vOffset: 100,
         opacity: 1
     },
     mobile: {
@@ -639,6 +638,7 @@ window.L2DwidgetConfig = {
 <script src="https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/autoload.js"></script>
 </body>
 </html>
+
 
 
 
