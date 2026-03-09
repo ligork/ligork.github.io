@@ -439,31 +439,11 @@
     </div>
 
     <!-- Live2D 看板娘 - 仅在桌面端显示 -->
-    <!-- Live2D 看板娘 - 仅在桌面端显示 -->
-<script>
-// 设备检测
-function isMobile() {
-    return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase());
-}
-
-// 只在电脑上显示
-if (!isMobile()) {
-    // 加载样式
-    var css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = 'https://ligork.github.io/live2d/waifu.css';
-    document.head.appendChild(css);
-    
-    // 加载核心脚本
-    var script = document.createElement('script');
-    script.src = 'https://ligork.github.io/live2d/autoload.js';
-    script.async = true;
-    document.body.appendChild(script);
-}
-</script>
+    <script src="https://ligork.github.io/live2d/autoload.js"></script>
     <!-- 注：所有图片已添加 ?raw=true 以防github blob页面直接显示html；同时增加备选占位，体验更流畅 -->
 </body>
 </html>
+
 
 
 
