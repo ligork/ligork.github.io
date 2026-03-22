@@ -195,15 +195,20 @@
     </div>
     
     <!-- 1. 预期价值模型 -->
-    <div id="ev" class="card">
-        <div class="card-title">📊 预期价值模型</div>
-        <div class="input-group"><label>🎁 奖励</label><input type="number" id="ev_reward" value="100"></div>
-        <div class="input-group"><label>📈 奖励概率 (%)</label><input type="number" id="ev_winProb" value="60"></div>
-        <div class="input-group"><label>⚠️ 惩罚</label><input type="number" id="ev_penalty" value="100"></div>
-        <button id="calcEVBtn">计算预期价值</button>
-        <div class="result-area" id="evResult">预期价值: —</div>
-        <div class="helper-text">💡 预期价值 = (奖励×赢概率) − (惩罚×输概率)。正值值得考虑，负值建议规避。</div>
+   <!-- 1. 预期价值模型（多方案版） -->
+<div id="ev" class="card">
+    <div class="card-title">📊 预期价值模型 · 多方案比较</div>
+    <div class="helper-text" style="margin-bottom:12px;">
+        💡 每个方案需要输入：奖励、奖励概率、惩罚、惩罚概率。<br>
+        📌 预期价值 = (奖励 × 奖励概率) - (惩罚 × 惩罚概率)<br>
+        📌 概率总和应 ≤ 100%（剩余为保本/中性结果）
     </div>
+    
+    <div id="evScenariosContainer"></div>
+    <button id="addEvScenarioBtn" class="btn-secondary" style="margin-bottom:16px;">+ 添加方案</button>
+    <button id="compareEvBtn">计算并比较方案</button>
+    <div class="result-area" id="evResult">点击计算按钮查看结果</div>
+</div>
     
     <!-- 2. 80/20法则 -->
     <div id="eighty20" class="card">
@@ -268,15 +273,141 @@
         btn.addEventListener('click', () => showModule(btn.dataset.module));
     });
     
-    // ==================== 1. 预期价值 ====================
-    document.getElementById('calcEVBtn').addEventListener('click', () => {
-        let reward = parseFloat(document.getElementById('ev_reward').value) || 0;
-        let winProb = parseFloat(document.getElementById('ev_winProb').value) || 0;
-        let penalty = parseFloat(document.getElementById('ev_penalty').value) || 0;
-        let ev = (reward * winProb / 100) - (penalty * (100 - winProb) / 100);
-        document.getElementById('evResult').innerHTML = `预期价值 = ${ev.toFixed(2)}<br>${ev > 0 ? '✅ 正向预期，值得考虑' : ev < 0 ? '⚠️ 负向预期，建议规避' : '⚖️ 中性'}`;
+    // ==================== 1. 预期价值模型（多方案版） ====================
+let evScenarios = [
+    { name: '方案A', reward: 100, winProb: 60, penalty: 100, loseProb: 40 },
+    { name: '方案B', reward: 80, winProb: 70, penalty: 50, loseProb: 30 }
+];
+
+function renderEvScenarios() {
+    const container = document.getElementById('evScenariosContainer');
+    container.innerHTML = '';
+    evScenarios.forEach((scenario, idx) => {
+        const card = document.createElement('div');
+        card.className = 'scenario-card';
+        card.style.marginBottom = '16px';
+        card.innerHTML = `
+            <div class="scenario-header" style="margin-bottom:12px;">
+                <input type="text" value="${escapeHtml(scenario.name)}" data-ev-name="${idx}" style="font-weight:600; width:auto; flex:1; padding:8px; border:1px solid #e5e5ea; border-radius:8px;">
+                <button class="remove-ev-scenario" data-ev-remove="${idx}" style="background:#ff3b30; width:auto; padding:8px 16px; margin-top:0;">删除</button>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                    <label style="font-size:13px; color:#666;">🎁 奖励</label>
+                    <input type="number" data-ev-reward="${idx}" value="${scenario.reward}" step="any" style="width:100%; padding:8px;">
+                </div>
+                <div>
+                    <label style="font-size:13px; color:#666;">📈 奖励概率 (%)</label>
+                    <input type="number" data-ev-winprob="${idx}" value="${scenario.winProb}" step="any" min="0" max="100" style="width:100%; padding:8px;">
+                </div>
+                <div>
+                    <label style="font-size:13px; color:#666;">⚠️ 惩罚</label>
+                    <input type="number" data-ev-penalty="${idx}" value="${scenario.penalty}" step="any" style="width:100%; padding:8px;">
+                </div>
+                <div>
+                    <label style="font-size:13px; color:#666;">📉 惩罚概率 (%)</label>
+                    <input type="number" data-ev-loseprob="${idx}" value="${scenario.loseProb}" step="any" min="0" max="100" style="width:100%; padding:8px;">
+                </div>
+            </div>
+            <div class="helper-text" style="margin-top:8px; font-size:12px;">
+                预期价值 = ${(scenario.reward * scenario.winProb / 100 - scenario.penalty * scenario.loseProb / 100).toFixed(2)}
+            </div>
+        `;
+        container.appendChild(card);
     });
     
+    // 绑定输入事件
+    document.querySelectorAll('[data-ev-name]').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.evName);
+            evScenarios[idx].name = e.target.value;
+            renderEvScenarios();
+        });
+    });
+    document.querySelectorAll('[data-ev-reward]').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.evReward);
+            evScenarios[idx].reward = parseFloat(e.target.value) || 0;
+            renderEvScenarios();
+        });
+    });
+    document.querySelectorAll('[data-ev-winprob]').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.evWinprob);
+            evScenarios[idx].winProb = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+            renderEvScenarios();
+        });
+    });
+    document.querySelectorAll('[data-ev-penalty]').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.evPenalty);
+            evScenarios[idx].penalty = parseFloat(e.target.value) || 0;
+            renderEvScenarios();
+        });
+    });
+    document.querySelectorAll('[data-ev-loseprob]').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.evLoseprob);
+            evScenarios[idx].loseProb = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+            renderEvScenarios();
+        });
+    });
+    
+    document.querySelectorAll('.remove-ev-scenario').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(btn.dataset.evRemove);
+            evScenarios.splice(idx, 1);
+            if (evScenarios.length === 0) {
+                evScenarios.push({ name: '方案A', reward: 0, winProb: 0, penalty: 0, loseProb: 0 });
+            }
+            renderEvScenarios();
+        });
+    });
+}
+
+document.getElementById('addEvScenarioBtn').addEventListener('click', () => {
+    evScenarios.push({ 
+        name: `方案${evScenarios.length + 1}`, 
+        reward: 0, 
+        winProb: 0, 
+        penalty: 0, 
+        loseProb: 0 
+    });
+    renderEvScenarios();
+});
+
+document.getElementById('compareEvBtn').addEventListener('click', () => {
+    if (evScenarios.length === 0) {
+        document.getElementById('evResult').innerHTML = '请至少添加一个方案。';
+        return;
+    }
+    
+    let results = evScenarios.map(s => {
+        let ev = (s.reward * s.winProb / 100) - (s.penalty * s.loseProb / 100);
+        let totalProb = s.winProb + s.loseProb;
+        let note = '';
+        if (totalProb < 100) note = ` (剩余${(100 - totalProb).toFixed(1)}%为中性结果，不计入)`;
+        else if (totalProb > 100) note = ` ⚠️ 概率总和超过100%，结果可能不准确`;
+        
+        return { name: s.name, ev: ev, note: note };
+    });
+    
+    results.sort((a, b) => b.ev - a.ev);
+    let best = results[0];
+    
+    let html = `🏆 <strong>最优方案：${escapeHtml(best.name)}</strong> (预期价值: ${best.ev.toFixed(2)})${best.note}<br><br>`;
+    html += `📊 各方案预期价值对比：<br>`;
+    results.forEach(r => {
+        let prefix = r.name === best.name ? '⭐ ' : '   ';
+        html += `${prefix}${escapeHtml(r.name)}: ${r.ev.toFixed(2)}${r.note}<br>`;
+    });
+    html += `<div class="helper-text" style="margin-top:8px;">💡 预期价值 = (奖励 × 奖励概率) - (惩罚 × 惩罚概率)。正值值得考虑，负值建议规避。</div>`;
+    
+    document.getElementById('evResult').innerHTML = html;
+});
+
+// 初始化渲染
+renderEvScenarios();
     // ==================== 2. 80/20 ====================
     document.getElementById('calc8020Btn').addEventListener('click', () => {
         let core = document.getElementById('coreItem').value.trim() || '你填写的事项';
